@@ -15,6 +15,7 @@
  */
 package org.factcast.store.inmem;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +38,7 @@ import java.util.stream.Stream;
 import org.factcast.core.Fact;
 import org.factcast.core.spec.FactSpecMatcher;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -52,7 +54,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @author uwe.schaefer@mercateo.com, joerg.adler@mercateo.com
  */
-@Deprecated
+// @Deprecated
 @Slf4j
 public class InMemFactStore implements FactStore {
 
@@ -68,6 +70,8 @@ public class InMemFactStore implements FactStore {
     final CopyOnWriteArrayList<InMemFollower> activeFollowers = new CopyOnWriteArrayList<>();
 
     final ExecutorService executorService;
+
+    final TokenStore tokens = new TokenStore();
 
     @VisibleForTesting
     InMemFactStore(@NonNull ExecutorService es) {
@@ -141,6 +145,7 @@ public class InMemFactStore implements FactStore {
         if (factsToPublish.stream().anyMatch(f -> ids.contains(f.id()))) {
             throw new IllegalArgumentException("duplicate ids - ids must be unique!");
         }
+
         // test on unique idents in batch
         if (factsToPublish.stream()
                 .filter(f -> f.meta("unique_identifier") != null)
@@ -221,4 +226,38 @@ public class InMemFactStore implements FactStore {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
+
+    @Override
+    public synchronized boolean publishIfUnchanged(StateToken token,
+            List<? extends Fact> factsToPublish) {
+        if (isStateUnchanged(tokens.get(token))) {
+            publish(factsToPublish);
+            tokens.invalidate(token);
+            return true;
+        } else
+            return false;
+    }
+
+    private boolean isStateUnchanged(Map<UUID, Optional<UUID>> state) {
+        for (Entry<UUID, Optional<UUID>> e : state.entrySet()) {
+            if (!latestFactFor(e.getKey()).equals(e.getValue()))
+                return false;
+        }
+        return true;
+    }
+
+    @Override
+    public synchronized StateToken stateFor(@NonNull UUID... forAggIds) {
+        Map<UUID, Optional<UUID>> state = new LinkedHashMap<>();
+        Arrays.asList(forAggIds).forEach(id -> state.put(id, latestFactFor(id)));
+        return tokens.create(state);
+    }
+
+    public Optional<UUID> latestFactFor(UUID id) {
+        // i miss kotlin
+        Fact last = store.values().stream().filter(f -> f.aggIds().contains(id)).reduce(null, (
+                oldId, newId) -> newId);
+        return Optional.ofNullable(last).map(Fact::id);
+    }
+
 }

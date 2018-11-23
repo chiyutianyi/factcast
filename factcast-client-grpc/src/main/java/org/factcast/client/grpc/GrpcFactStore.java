@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionImpl;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -224,5 +225,16 @@ class GrpcFactStore implements FactStore, SmartInitializingSingleton {
     public Set<String> enumerateTypes(String ns) {
         MSG_StringSet set = blockingStub.enumerateTypes(converter.toProto(ns));
         return converter.fromProto(set);
+    }
+
+    @Override
+    public boolean publishIfUnchanged(StateToken token, List<? extends Fact> factsToPublish) {
+        // TODO
+        return false;
+    }
+
+    @Override
+    public StateToken stateFor(UUID... forAggIds) {// TODO
+        return null;
     }
 }

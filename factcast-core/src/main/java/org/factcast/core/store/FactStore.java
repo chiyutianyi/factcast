@@ -30,10 +30,10 @@ import lombok.NonNull;
 
 /**
  * A read/Write FactStore.
- *
+ * <p>
  * Where FactCast is an interface to work with as an application, FactStore is
  * something that FactCast impls use to actually store and retrieve Facts.
- *
+ * <p>
  * In a sense it is an internal interface, or SPI implemented by for instance
  * InMemFactStore or PGFactStore.
  *
@@ -50,7 +50,18 @@ public interface FactStore {
     OptionalLong serialOf(UUID l);
 
     // see #153
-    Set<String> enumerateNamespaces();
+    public Set<String> enumerateNamespaces();
 
     Set<String> enumerateTypes(@NonNull String ns);
+
+    // playing with api - this is experimental!
+
+    boolean publishIfUnchanged(StateToken token, List<? extends Fact> factsToPublish);
+
+    // TODO what about namespaces?
+    StateToken stateFor(UUID... forAggIds);
+
+    // internal
+    // somewhat VisibleForTesting
+    Optional<UUID> latestFactFor(UUID aggId);
 }

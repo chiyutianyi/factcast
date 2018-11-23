@@ -26,6 +26,7 @@ import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.store.FactStore;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequestTO;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -202,5 +203,17 @@ public class PGFactStore implements FactStore {
             return new HashSet<>(jdbcTemplate.query(PGConstants.SELECT_DISTINCT_TYPE_IN_NAMESPACE,
                     new Object[] { ns }, this::extractStringFromResultSet));
         }
+    }
+
+    @Override
+    public boolean publishIfUnchanged(StateToken token, List<? extends Fact> factsToPublish) {
+        // TODO
+        return false;
+    }
+
+    @Override
+    public StateToken stateFor(UUID... forAggIds) {
+        // TODO
+        return null;
     }
 }
