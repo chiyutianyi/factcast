@@ -56,7 +56,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 // @Deprecated
 @Slf4j
-public class InMemFactStore implements FactStore {
+public class InMemFactStore implements FactStore.ForTesting {
 
     final AtomicLong highwaterMark = new AtomicLong(0);
 
@@ -253,11 +253,15 @@ public class InMemFactStore implements FactStore {
         return tokens.create(state);
     }
 
-    public Optional<UUID> latestFactFor(UUID id) {
-        // i miss kotlin
-        Fact last = store.values().stream().filter(f -> f.aggIds().contains(id)).reduce(null, (
-                oldId, newId) -> newId);
+    @Override
+    public Optional<UUID> latestFactFor(UUID aggId, Set<UUID> factIdsToIgnore) {
+        Fact last = store.values()
+                .stream()
+                .filter(f -> f.aggIds().contains(aggId))
+                .filter(f -> !factIdsToIgnore.contains(f.id()))
+                .reduce(null, (oldId, newId) -> newId);
         return Optional.ofNullable(last).map(Fact::id);
+
     }
 
 }

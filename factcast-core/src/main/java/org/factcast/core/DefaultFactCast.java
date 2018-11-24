@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.factcast.core.store.FactStore;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.SubscriptionRequestTO;
@@ -37,7 +38,7 @@ import lombok.RequiredArgsConstructor;
  * @author uwe.schaefer@mercateo.com
  */
 @RequiredArgsConstructor
-class DefaultFactCast implements FactCast {
+public class DefaultFactCast implements FactCast {
 
     @NonNull
     final FactStore store;
@@ -72,6 +73,16 @@ class DefaultFactCast implements FactCast {
                         + " lacks required id.");
         });
         store.publish(factsToPublish);
+    }
+
+    @Override
+    public StateToken stateFor(UUID... aggId) {
+        return store.stateFor(aggId);
+    }
+
+    @Override
+    public boolean publishIfUnchanged(StateToken state, List<Fact> factsToPublish) {
+        return store.publishIfUnchanged(state, factsToPublish);
     }
 
     private boolean lacksRequiredNamespace(Fact f) {

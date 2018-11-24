@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import org.factcast.core.Fact;
 import org.factcast.core.FactCast;
+import org.factcast.core.store.StateToken;
 import org.factcast.core.subscription.Subscription;
 import org.factcast.core.subscription.SubscriptionRequest;
 import org.factcast.core.subscription.observer.FactObserver;
@@ -30,6 +31,7 @@ import org.factcast.core.subscription.observer.IdObserver;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.Delegate;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -43,6 +45,16 @@ public class CachingFactCast implements FactCast {
     @Override
     public void publish(@NonNull List<? extends Fact> factsToPublish) {
         delegate.publish(factsToPublish);
+    }
+
+    @Override
+    public StateToken stateFor(UUID... aggId) {
+        return delegate.stateFor(aggId);
+    }
+
+    @Override
+    public boolean publishIfUnchanged(StateToken state, List<Fact> factsToPublish) {
+        return delegate.publishIfUnchanged(state, factsToPublish);
     }
 
     @Override

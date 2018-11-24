@@ -17,10 +17,10 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class PGFactStore3IT extends AbstractFactStore0Test {
 
     @Autowired
-    FactStore store;
+    FactStore.ForTesting store;
 
     @Override
-    protected FactStore createStoreToTest() {
+    protected FactStore.ForTesting createStoreToTest() {
         return store;
     }
 }

@@ -15,6 +15,7 @@
  */
 package org.factcast.core.store;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -61,7 +62,13 @@ public interface FactStore {
     // TODO what about namespaces?
     StateToken stateFor(UUID... forAggIds);
 
-    // internal
-    // somewhat VisibleForTesting
-    Optional<UUID> latestFactFor(UUID aggId);
+    @Deprecated
+    interface ForTesting extends FactStore {
+        default Optional<UUID> latestFactFor(UUID aggId) {
+            return latestFactFor(aggId, Collections.emptySet());
+        }
+
+        Optional<UUID> latestFactFor(UUID aggId, Set<UUID> factIdsToIgnore);
+
+    }
 }

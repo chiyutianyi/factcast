@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -58,14 +58,14 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import lombok.SneakyThrows;
 
-@SuppressWarnings("OptionalGetWithoutIsPresent")
+@SuppressWarnings({ "OptionalGetWithoutIsPresent", "deprecated" })
 public abstract class AbstractFactStore0Test {
 
     static final FactSpec ANY = FactSpec.ns("default");
 
     protected FactCast fc;
 
-    protected FactStore store;
+    protected FactStore.ForTesting store;
 
     @BeforeEach
     void setUp() {
@@ -73,7 +73,7 @@ public abstract class AbstractFactStore0Test {
         fc = FactCast.from(store);
     }
 
-    protected abstract FactStore createStoreToTest();
+    protected abstract FactStore.ForTesting createStoreToTest();
 
     @DirtiesContext
     @Test
@@ -724,15 +724,15 @@ public abstract class AbstractFactStore0Test {
         store.publish(Arrays.asList(f1, f2, f3));
         assertEquals(f2.id(), store.latestFactFor(aggId).get());
 
-        createStoreToTest();
+        store = createStoreToTest();
         store.publish(Arrays.asList(f1, f3, f2));
         assertEquals(f2.id(), store.latestFactFor(aggId).get());
 
-        createStoreToTest();
+        store = createStoreToTest();
         store.publish(Arrays.asList(f3, f2, f1));
         assertEquals(f1.id(), store.latestFactFor(aggId).get());
 
-        createStoreToTest();
+        store = createStoreToTest();
         store.publish(Arrays.asList(f3));
         assertFalse(store.latestFactFor(aggId).isPresent());
 
@@ -768,12 +768,24 @@ public abstract class AbstractFactStore0Test {
         Fact f2 = Fact.builder().aggId(aggId).build("{}");
         Fact f3 = Fact.builder().aggId(aggId).build("{}");
 
-        store.publish(Arrays.asList(f1));
-        StateToken t = store.stateFor(aggId);
+        fc.publish(Arrays.asList(f1));
+        StateToken t = fc.stateFor(aggId);
+        // interfere
+        fc.publish(Arrays.asList(f2));
 
-        store.publish(Arrays.asList(f2));
-        assertFalse(store.publishIfUnchanged(t, Arrays.asList(f3)));
-        assertEquals(f2.id(), store.latestFactFor(aggId).get());
+        assertFalse(fc.publishIfUnchanged(t, Arrays.asList(f3)));
+    }
+
+    @Test
+    void testConditionalPublish_withoutChange() {
+        UUID aggId = UUID.randomUUID();
+        Fact f1 = Fact.builder().aggId(aggId).build("{}");
+        Fact f2 = Fact.builder().aggId(aggId).build("{}");
+        Fact f3 = Fact.builder().aggId(aggId).build("{}");
+
+        fc.publish(Arrays.asList(f1));
+        StateToken t = fc.stateFor(aggId);
+        assertTrue(fc.publishIfUnchanged(t, Arrays.asList(f2, f3)));
     }
 
 }

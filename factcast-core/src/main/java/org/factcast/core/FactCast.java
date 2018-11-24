@@ -22,12 +22,13 @@ import java.util.List;
 import java.util.UUID;
 
 import org.factcast.core.store.FactStore;
+import org.factcast.core.store.StateToken;
 
 import lombok.NonNull;
 
 /**
  * Main interface to work against as a client.
- *
+ * <p>
  * FactCast provides methods to publish Facts in a sync/async fashion, as well
  * as a subscription mechanism to listen for changes and catching up.
  *
@@ -56,7 +57,11 @@ public interface FactCast extends ReadFactCast {
         return mark.id();
     }
 
+    StateToken stateFor(UUID... aggId);
+
+    boolean publishIfUnchanged(StateToken state, List<Fact> factsToPublish);
     // Factory
+
     static FactCast from(@NonNull FactStore store) {
         return new DefaultFactCast(store);
     }

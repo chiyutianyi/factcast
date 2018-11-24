@@ -15,7 +15,7 @@ public class InMemFactStore0Test extends AbstractFactStore0Test {
     private InMemFactStore store;
 
     @Override
-    protected FactStore createStoreToTest() {
+    protected FactStore.ForTesting createStoreToTest() {
         this.store = new InMemFactStore();
         return store;
     }
